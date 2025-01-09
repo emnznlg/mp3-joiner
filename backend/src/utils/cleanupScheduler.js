@@ -82,4 +82,13 @@ class CleanupScheduler {
   }
 }
 
-module.exports = new CleanupScheduler();
+const cleanupScheduler = new CleanupScheduler();
+
+function setupCleanupScheduler() {
+  cleanupScheduler.start();
+}
+
+module.exports = {
+  setupCleanupScheduler,
+  cleanupScheduler,
+};

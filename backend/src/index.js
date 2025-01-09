@@ -1,48 +1,48 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const swaggerUi = require("swagger-ui-express");
-const swaggerSpecs = require("./utils/swagger");
-const cleanupScheduler = require("./utils/cleanupScheduler");
+const swaggerSpec = require("./utils/swagger");
 const routes = require("./routes");
+const { setupCleanupScheduler } = require("./utils/cleanupScheduler");
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-// CORS yapılandırması
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Geliştirme ortamında tüm originlere izin ver
-    // Production ortamında bu kısmı güvenlik gereksinimlerine göre düzenle
-    callback(null, true);
-  },
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  maxAge: 86400, // CORS önbellek süresi (24 saat)
-};
-
-// Middleware
-app.use(cors(corsOptions));
-app.use(express.json());
-
-// Swagger UI
+// CORS ayarları
 app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpecs, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "MP3 Joiner API Documentation",
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Access-Control-Allow-Origin"],
+    credentials: true,
   })
 );
 
-// Routes
+// Statik dosya sunumu
+app.use(express.static(path.join(__dirname, "public")));
+
+// API dokümantasyonu
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// API rotaları
 app.use("/api", routes);
 
-// Dosya temizleme mekanizmasını başlat
-cleanupScheduler.start();
+// Geçici dosyaları temizleme
+setupCleanupScheduler();
 
-const PORT = process.env.PORT || 3000;
+// Gerekli klasörleri oluştur
+const uploadDir = path.join(process.cwd(), "uploads");
+const tempDir = path.join(process.cwd(), "temp");
+if (!require("fs").existsSync(uploadDir)) {
+  require("fs").mkdirSync(uploadDir, { recursive: true });
+}
+if (!require("fs").existsSync(tempDir)) {
+  require("fs").mkdirSync(tempDir, { recursive: true });
+}
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+  console.log(`API Documentation: http://localhost:${port}/api-docs`);
 });
