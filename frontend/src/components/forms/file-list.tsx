@@ -92,8 +92,6 @@ function SortableFileItem({
       <div className="flex items-center gap-2">
         <Button
           type="button"
-          variant="ghost"
-          size="sm"
           className={cn(
             "text-gray-400",
             hasSilence && "text-primary hover:text-primary/80",
